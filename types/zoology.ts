@@ -1,37 +1,85 @@
+export type AnimalStatus = "available" | "coming-soon";
+
+export type AnatomySystem =
+  | "external"
+  | "skeletal"
+  | "muscular"
+  | "digestive"
+  | "respiratory"
+  | "circulatory"
+  | "excretory"
+  | "nervous"
+  | "reproductive";
+
 export interface Animal {
-  id: string;
+  slug: string;
   commonName: string;
   scientificName: string;
-  slug: string;
   phylum: string;
   className: string;
-  habitat: string;
-  shortDescription: string;
-  status: "available" | "coming-soon";
+  order?: string;
+  family?: string;
+  genus?: string;
+  species?: string;
+
+  description: string;
+  habitat?: string;
+
+  systems: AnatomySystem[];
+
+  status: AnimalStatus;
 }
 
 export interface TaxonomyNode {
   name: string;
-  rank: string;
-  children?: TaxonomyNode[];
-  organisms?: string[];
-}
+  rank:
+    | "Kingdom"
+    | "Phylum"
+    | "Class"
+    | "Order"
+    | "Family"
+    | "Genus"
+    | "Species";
 
-export type AnatomySystem =
-  | "external"
-  | "muscular"
-  | "skeletal"
-  | "digestive"
-  | "respiratory"
-  | "circulatory"
-  | "nervous"
-  | "reproductive";
+  children?: TaxonomyNode[];
+
+  organisms?: {
+    slug: string;
+    commonName: string;
+    scientificName: string;
+  }[];
+}
 
 export interface AnatomyStructure {
   id: string;
-  name: string;
+  animalSlug: string;
   system: AnatomySystem;
-  description: string;
-  function: string;
+
+  name: string;
+  shortDescription?: string;
+
+  /**
+   * Future:
+   * - 3D model
+   * - 2D image
+   * - SVG
+   * - hotspot coordinates
+   */
+  assetType?: "none" | "2d" | "3d";
+  assetUrl?: string;
+
   verified: boolean;
+}
+
+export interface AnimalAnatomy {
+  animalSlug: string;
+
+  systems: AnatomySystem[];
+
+  structures: AnatomyStructure[];
+
+  /**
+   * Future virtual dissection flow.
+   */
+  dissectionAvailable: boolean;
 }
