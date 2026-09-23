@@ -141,24 +141,44 @@ export const taxonomy: TaxonomyNode = {
       rank: "Phylum",
       children: [
         {
-          name: "Branchiostoma",
-          rank: "Organism",
+          name: "Pisces",
+          rank: "Class",
+          children: [
+            {
+              name: "Rohu",
+              rank: "Organism",
+            },
+          ],
         },
         {
-          name: "Rohu",
-          rank: "Organism",
+          name: "Amphibia",
+          rank: "Class",
+          children: [
+            {
+              name: "Frog",
+              rank: "Organism",
+            },
+          ],
         },
         {
-          name: "Frog",
-          rank: "Organism",
+          name: "Aves",
+          rank: "Class",
+          children: [
+            {
+              name: "Pigeon",
+              rank: "Organism",
+            },
+          ],
         },
         {
-          name: "Pigeon",
-          rank: "Organism",
-        },
-        {
-          name: "Rabbit",
-          rank: "Organism",
+          name: "Mammalia",
+          rank: "Class",
+          children: [
+            {
+              name: "Rabbit",
+              rank: "Organism",
+            },
+          ],
         },
       ],
     },
