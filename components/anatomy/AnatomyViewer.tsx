@@ -1,253 +1,350 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RotateCcw, ZoomIn, ZoomOut, Eye, EyeOff, Info } from "lucide-react";
+import {
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+  Info,
+  Layers3,
+  CircleAlert,
+  Box,
+} from "lucide-react";
 
-import { anatomyStructures, anatomySystems } from "@/data/anatomy";
+import type { Animal, AnatomyStructure, AnatomySystem } from "@/types/zoology";
 
-import { AnatomySystem } from "@/types/zoology";
+import { getAnimalAnatomy } from "@/data/anatomy";
 
 interface AnatomyViewerProps {
-  animalName: string;
+  animal: Animal;
 }
 
-export default function AnatomyViewer({ animalName }: AnatomyViewerProps) {
-  const [activeSystem, setActiveSystem] = useState<AnatomySystem>("external");
+const systemLabels: Record<AnatomySystem, string> = {
+  external: "External",
+  skeletal: "Skeletal",
+  muscular: "Muscular",
+  digestive: "Digestive",
+  respiratory: "Respiratory",
+  circulatory: "Circulatory",
+  excretory: "Excretory",
+  nervous: "Nervous",
+  reproductive: "Reproductive",
+};
 
-  const [selectedStructure, setSelectedStructure] = useState(
-    anatomyStructures[0],
+export default function AnatomyViewer({ animal }: AnatomyViewerProps) {
+  const anatomy = getAnimalAnatomy(animal.slug);
+
+  const availableSystems = anatomy?.systems ?? [];
+
+  const [activeSystem, setActiveSystem] = useState<AnatomySystem>(
+    availableSystems[0] ?? "external",
   );
 
-  const [zoom, setZoom] = useState(1);
+  const [selectedStructure, setSelectedStructure] = useState<
+    AnatomyStructure | undefined
+  >();
 
   const [showInfo, setShowInfo] = useState(true);
 
-  const structures = useMemo(
-    () =>
-      anatomyStructures.filter(
-        (structure) => structure.system === activeSystem,
-      ),
-    [activeSystem],
-  );
+  const [zoom, setZoom] = useState(100);
 
-  const handleReset = () => {
-    setZoom(1);
-    setActiveSystem("external");
-    setSelectedStructure(anatomyStructures[0]);
+  const structures = useMemo(() => {
+    if (!anatomy) return [];
+
+    return anatomy.structures.filter(
+      (structure) => structure.system === activeSystem,
+    );
+  }, [anatomy, activeSystem]);
+
+  const handleSystemChange = (system: AnatomySystem) => {
+    setActiveSystem(system);
+
+    const firstStructure = anatomy?.structures.find(
+      (structure) => structure.system === system,
+    );
+
+    setSelectedStructure(firstStructure);
   };
 
+  const handleZoomIn = () => {
+    setZoom((current) => Math.min(current + 10, 150));
+  };
+
+  const handleZoomOut = () => {
+    setZoom((current) => Math.max(current - 10, 70));
+  };
+
+  const handleReset = () => {
+    setZoom(100);
+
+    const firstStructure = anatomy?.structures.find(
+      (structure) => structure.system === activeSystem,
+    );
+
+    setSelectedStructure(firstStructure);
+  };
+
+  if (!anatomy) {
+    return (
+      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-10 text-center">
+        <CircleAlert className="mx-auto mb-4 h-10 w-10 text-amber-400" />
+
+        <h2 className="text-xl font-semibold text-white">
+          Anatomy data unavailable
+        </h2>
+
+        <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-400">
+          Verified anatomy data for{" "}
+          <span className="text-white">{animal.commonName}</span> has not been
+          added yet.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[240px_1fr_320px]">
-      {/* SYSTEM SIDEBAR */}
-      <aside className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <div className="mb-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-400">
-            Anatomy
-          </p>
-
-          <h2 className="mt-1 text-lg font-semibold text-white">Systems</h2>
-        </div>
-
-        <div className="space-y-1">
-          {anatomySystems.map((system) => {
-            const active = activeSystem === system.id;
-
-            return (
-              <button
-                key={system.id}
-                onClick={() => {
-                  setActiveSystem(system.id);
-
-                  const firstStructure = anatomyStructures.find(
-                    (item) => item.system === system.id,
-                  );
-
-                  if (firstStructure) {
-                    setSelectedStructure(firstStructure);
-                  }
-                }}
-                className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition ${
-                  active
-                    ? "bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/20"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                {system.label}
-              </button>
-            );
-          })}
-        </div>
-      </aside>
-
-      {/* VIEWER */}
-      <section className="relative min-h-[620px] overflow-hidden rounded-2xl border border-white/10 bg-[#071018]">
-        {/* top toolbar */}
-        <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              Interactive Viewer
-            </p>
-
-            <h3 className="mt-1 font-semibold text-white">{animalName}</h3>
-          </div>
-
+    <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#071014] shadow-2xl shadow-black/20">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setZoom((value) => Math.min(value + 0.1, 1.8))}
-              className="rounded-lg border border-white/10 bg-black/30 p-2 text-slate-300 hover:bg-white/10"
-              aria-label="Zoom in"
-            >
-              <ZoomIn size={17} />
-            </button>
+            <Box className="h-5 w-5 text-cyan-400" />
 
-            <button
-              onClick={() => setZoom((value) => Math.max(value - 0.1, 0.7))}
-              className="rounded-lg border border-white/10 bg-black/30 p-2 text-slate-300 hover:bg-white/10"
-              aria-label="Zoom out"
-            >
-              <ZoomOut size={17} />
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="rounded-lg border border-white/10 bg-black/30 p-2 text-slate-300 hover:bg-white/10"
-              aria-label="Reset"
-            >
-              <RotateCcw size={17} />
-            </button>
-
-            <button
-              onClick={() => setShowInfo((value) => !value)}
-              className="rounded-lg border border-white/10 bg-black/30 p-2 text-slate-300 hover:bg-white/10"
-              aria-label="Toggle information"
-            >
-              {showInfo ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
-          </div>
-        </div>
-
-        {/* viewer canvas */}
-        <div className="flex min-h-[620px] items-center justify-center p-12">
-          <div
-            className="relative flex aspect-[3/4] w-full max-w-[360px] items-center justify-center rounded-[40%] border border-cyan-400/10 bg-gradient-to-b from-cyan-400/[0.04] via-transparent to-blue-500/[0.03] transition-transform duration-300"
-            style={{
-              transform: `scale(${zoom})`,
-            }}
-          >
-            <div className="text-center px-8">
-              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/5">
-                <Info className="text-cyan-400" size={30} />
-              </div>
-
-              <h3 className="text-lg font-semibold text-white">
-                Anatomy Asset Required
-              </h3>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                A verified anatomy diagram or 3D model will be connected to this
-                viewer.
-              </p>
-
-              <div className="mt-5 inline-flex rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1 text-xs text-amber-300">
-                Scientific asset pending verification
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* bottom status */}
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur">
-          <span className="text-xs text-slate-500">Active layer</span>
-
-          <span className="text-xs font-medium text-cyan-300">
-            {anatomySystems.find((system) => system.id === activeSystem)?.label}
-          </span>
-        </div>
-      </section>
-
-      {/* INFORMATION PANEL */}
-      {showInfo && (
-        <aside className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <div className="mb-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-400">
-              Structure
-            </p>
-
-            <h2 className="mt-2 text-xl font-semibold text-white">
-              {selectedStructure?.name ?? "No structure selected"}
+            <h2 className="font-semibold text-white">
+              {animal.commonName} Anatomy
             </h2>
           </div>
 
-          {selectedStructure ? (
-            <div className="space-y-6">
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">
-                  Description
-                </p>
+          <p className="mt-1 text-sm text-zinc-500">
+            Interactive anatomy workspace
+          </p>
+        </div>
 
-                <p className="text-sm leading-6 text-slate-400">
-                  {selectedStructure.description}
-                </p>
-              </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+            aria-label="Zoom out"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
 
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">
-                  Function
-                </p>
+          <div className="min-w-14 text-center text-xs text-zinc-400">
+            {zoom}%
+          </div>
 
-                <p className="text-sm leading-6 text-slate-400">
-                  {selectedStructure.function}
-                </p>
-              </div>
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+            aria-label="Zoom in"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
 
-              <div className="border-t border-white/10 pt-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500">Verification</span>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+            aria-label="Reset viewer"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
 
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs ${
-                      selectedStructure.verified
-                        ? "bg-emerald-400/10 text-emerald-300"
-                        : "bg-amber-400/10 text-amber-300"
-                    }`}
-                  >
-                    {selectedStructure.verified ? "Verified" : "Pending"}
+          <button
+            type="button"
+            onClick={() => setShowInfo((current) => !current)}
+            className={`rounded-lg border p-2 transition ${
+              showInfo
+                ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-300"
+                : "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
+            }`}
+            aria-label="Toggle information"
+          >
+            <Info className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-[220px_1fr_280px]">
+        {/* Systems */}
+        <aside className="border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <Layers3 className="h-4 w-4" />
+            Systems
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto lg:flex-col">
+            {availableSystems.map((system) => {
+              const active = activeSystem === system;
+
+              const count = anatomy.structures.filter(
+                (structure) => structure.system === system,
+              ).length;
+
+              return (
+                <button
+                  key={system}
+                  type="button"
+                  onClick={() => handleSystemChange(system)}
+                  className={`flex min-w-fit items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                    active
+                      ? "bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/20"
+                      : "text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+                  }`}
+                >
+                  <span>{systemLabels[system]}</span>
+
+                  <span className="ml-3 rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-zinc-500">
+                    {count}
                   </span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Viewer */}
+        <section className="relative min-h-[520px] overflow-hidden bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.08),transparent_45%)]">
+          {/* Grid */}
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+          />
+
+          <div className="absolute left-5 top-5 rounded-lg border border-white/10 bg-black/20 px-3 py-2 backdrop-blur">
+            <p className="text-[10px] uppercase tracking-wider text-zinc-500">
+              Active System
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-white">
+              {systemLabels[activeSystem]}
+            </p>
+          </div>
+
+          {/* Placeholder canvas */}
+          <div className="relative z-10 flex min-h-[520px] items-center justify-center p-8">
+            <div
+              className="text-center transition-transform duration-300"
+              style={{
+                transform: `scale(${zoom / 100})`,
+              }}
+            >
+              <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/[0.03] shadow-[0_0_100px_rgba(34,211,238,0.06)]">
+                <div className="flex h-40 w-40 items-center justify-center rounded-full border border-dashed border-cyan-400/20">
+                  <Box className="h-14 w-14 text-cyan-400/50" />
+                </div>
+              </div>
+
+              <div className="mt-7">
+                <p className="text-sm font-medium text-zinc-300">
+                  Scientific visualization pending
+                </p>
+
+                <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-zinc-600">
+                  A verified 2D or 3D anatomy asset will be connected here. No
+                  fabricated anatomy visualization is being used.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Structures */}
+          {structures.length > 0 && (
+            <div className="absolute bottom-5 left-5 right-5 z-20">
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-3 backdrop-blur-xl">
+                <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                  Available Structures
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {structures.map((structure) => {
+                    const active = selectedStructure?.id === structure.id;
+
+                    return (
+                      <button
+                        key={structure.id}
+                        type="button"
+                        onClick={() => setSelectedStructure(structure)}
+                        className={`rounded-lg border px-3 py-2 text-xs transition ${
+                          active
+                            ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-300"
+                            : "border-white/10 bg-white/[0.03] text-zinc-400 hover:bg-white/[0.06] hover:text-white"
+                        }`}
+                      >
+                        {structure.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-slate-500">
-              Select an anatomical structure to inspect it.
-            </p>
           )}
+        </section>
 
-          {/* available structures */}
-          {structures.length > 0 && (
-            <div className="mt-8">
-              <p className="mb-3 text-xs uppercase tracking-wider text-slate-500">
-                Available structures
-              </p>
+        {/* Information */}
+        {showInfo && (
+          <aside className="border-t border-white/10 p-5 lg:border-l lg:border-t-0">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-cyan-400" />
 
-              <div className="space-y-2">
-                {structures.map((structure) => (
-                  <button
-                    key={structure.id}
-                    onClick={() => setSelectedStructure(structure)}
-                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
-                      selectedStructure?.id === structure.id
-                        ? "border-cyan-400/20 bg-cyan-400/5 text-cyan-300"
-                        : "border-white/5 text-slate-400 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    {structure.name}
-                  </button>
-                ))}
-              </div>
+              <h3 className="text-sm font-semibold text-white">
+                Structure Information
+              </h3>
             </div>
-          )}
-        </aside>
-      )}
+
+            {selectedStructure ? (
+              <div className="mt-5">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h4 className="text-base font-semibold text-white">
+                      {selectedStructure.name}
+                    </h4>
+
+                    {!selectedStructure.verified && (
+                      <span className="shrink-0 rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-1 text-[9px] font-medium uppercase tracking-wider text-amber-300">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-3 text-sm leading-6 text-zinc-400">
+                    {selectedStructure.shortDescription ??
+                      "Scientific description pending verification."}
+                  </p>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-600">
+                    Asset Status
+                  </p>
+
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {selectedStructure.assetType === "2d"
+                      ? "2D visualization asset connected"
+                      : selectedStructure.assetType === "3d"
+                        ? "3D visualization asset connected"
+                        : "No visualization asset connected"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5 rounded-2xl border border-dashed border-white/10 p-5 text-center">
+                <Info className="mx-auto h-6 w-6 text-zinc-600" />
+
+                <p className="mt-3 text-sm text-zinc-500">
+                  Select a structure to inspect it.
+                </p>
+              </div>
+            )}
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Dna, Search } from "lucide-react";
 
 import { animals } from "@/data/animals";
 import AnatomyViewer from "@/components/anatomy/AnatomyViewer";
 
 export default function AnatomyPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const animalSlug = searchParams.get("animal");
+  const animalFromUrl = searchParams.get("animal");
 
   const availableAnimals = useMemo(
     () => animals.filter((animal) => animal.status === "available"),
@@ -19,118 +20,158 @@ export default function AnatomyPage() {
   );
 
   const initialAnimal =
-    availableAnimals.find((animal) => animal.slug === animalSlug) ??
+    availableAnimals.find((animal) => animal.slug === animalFromUrl) ??
     availableAnimals[0];
 
   const [selectedAnimal, setSelectedAnimal] = useState(initialAnimal);
 
   useEffect(() => {
-    const animal = availableAnimals.find((item) => item.slug === animalSlug);
+    const animal = availableAnimals.find((item) => item.slug === animalFromUrl);
 
     if (animal) {
       setSelectedAnimal(animal);
     }
-  }, [animalSlug, availableAnimals]);
+  }, [animalFromUrl, availableAnimals]);
+
+  const handleAnimalChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const slug = event.target.value;
+
+    const animal = availableAnimals.find((item) => item.slug === slug);
+
+    if (!animal) return;
+
+    setSelectedAnimal(animal);
+
+    router.replace(`/anatomy?animal=${animal.slug}`, { scroll: false });
+  };
 
   if (!selectedAnimal) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#03070b] text-white">
-        <p className="text-zinc-500">No animal available.</p>
+      <main className="min-h-screen bg-[#05080a] px-6 py-20 text-white">
+        <div className="mx-auto max-w-5xl text-center">
+          <h1 className="text-2xl font-bold">No anatomy-ready animals found</h1>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#03070b] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* HEADER */}
-        <div className="mb-8">
+    <main className="min-h-screen bg-[#05080a] text-white">
+      {/* Header */}
+      <section className="border-b border-white/10 bg-gradient-to-b from-cyan-400/[0.05] to-transparent">
+        <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
           <Link
             href="/animals"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-white"
+            className="inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-white"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft className="h-4 w-4" />
             Back to Animals
           </Link>
 
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            {/* TITLE */}
+          <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-cyan-400">
-                Zoology Atlas
-              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10">
+                  <Dna className="h-5 w-5 text-cyan-400" />
+                </div>
 
-              <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">
+                  Anatomy Atlas
+                </span>
+              </div>
+
+              <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
                 Interactive Anatomy
               </h1>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-                Explore anatomical systems through an interactive learning
-                environment built for Zoology students.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">
+                Explore verified anatomy structures and biological systems
+                through an interactive learning workspace.
               </p>
             </div>
 
-            {/* ANIMAL SELECTOR */}
-            <div>
+            {/* Animal selector */}
+            <div className="w-full lg:w-80">
               <label
                 htmlFor="animal"
-                className="mb-2 block text-xs uppercase tracking-wider text-zinc-600"
+                className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500"
               >
-                Select organism
+                Select Animal
               </label>
 
-              <select
-                id="animal"
-                value={selectedAnimal.slug}
-                onChange={(event) => {
-                  const animal = availableAnimals.find(
-                    (item) => item.slug === event.target.value,
-                  );
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
 
-                  if (animal) {
-                    setSelectedAnimal(animal);
-
-                    window.history.replaceState(
-                      null,
-                      "",
-                      `/anatomy?animal=${animal.slug}`,
-                    );
-                  }
-                }}
-                className="min-w-[220px] rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400/40"
-              >
-                {availableAnimals.map((animal) => (
-                  <option
-                    key={animal.id}
-                    value={animal.slug}
-                    className="bg-[#071018]"
-                  >
-                    {animal.commonName}
-                  </option>
-                ))}
-              </select>
+                <select
+                  id="animal"
+                  value={selectedAnimal.slug}
+                  onChange={handleAnimalChange}
+                  className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-10 pr-4 text-sm text-white outline-none transition focus:border-cyan-400/40"
+                >
+                  {availableAnimals.map((animal) => (
+                    <option
+                      key={animal.slug}
+                      value={animal.slug}
+                      className="bg-[#071014]"
+                    >
+                      {animal.commonName} — {animal.scientificName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* CURRENT ANIMAL */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <span className="rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1 text-xs font-medium text-cyan-300">
-            {selectedAnimal.phylum}
-          </span>
+      {/* Viewer */}
+      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        <AnatomyViewer key={selectedAnimal.slug} animal={selectedAnimal} />
+      </section>
 
-          <span className="text-sm text-zinc-500">
-            {selectedAnimal.commonName}
-          </span>
+      {/* Footer information */}
+      <section className="mx-auto max-w-7xl px-6 pb-16 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <p className="text-xs uppercase tracking-wider text-zinc-600">
+              Animal
+            </p>
 
-          <span className="text-sm italic text-zinc-600">
-            {selectedAnimal.scientificName}
-          </span>
+            <h3 className="mt-2 text-lg font-semibold text-white">
+              {selectedAnimal.commonName}
+            </h3>
+
+            <p className="mt-1 text-sm italic text-zinc-500">
+              {selectedAnimal.scientificName}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <p className="text-xs uppercase tracking-wider text-zinc-600">
+              Phylum
+            </p>
+
+            <h3 className="mt-2 text-lg font-semibold text-white">
+              {selectedAnimal.phylum}
+            </h3>
+
+            <p className="mt-1 text-sm text-zinc-500">
+              {selectedAnimal.className}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <p className="text-xs uppercase tracking-wider text-zinc-600">
+              Scientific Asset Policy
+            </p>
+
+            <p className="mt-2 text-sm leading-6 text-zinc-500">
+              Anatomy visualizations will only be added after scientific
+              verification.
+            </p>
+          </div>
         </div>
-
-        {/* ANATOMY VIEWER */}
-        <AnatomyViewer animalName={selectedAnimal.commonName} />
-      </div>
+      </section>
     </main>
   );
 }
