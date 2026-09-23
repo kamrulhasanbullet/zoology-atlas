@@ -1,28 +1,37 @@
 export interface Animal {
   id: string;
-  slug: string;
   commonName: string;
   scientificName: string;
-
-  kingdom: string;
+  slug: string;
   phylum: string;
-  class?: string;
-  order?: string;
-  family?: string;
-
-  description: string;
-
-  habitat?: string;
-
-  systems: string[];
-
-  image?: string;
-
-  status?: "available" | "coming-soon";
+  className: string;
+  habitat: string;
+  shortDescription: string;
+  status: "available" | "coming-soon";
 }
 
 export interface TaxonomyNode {
   name: string;
   rank: string;
   children?: TaxonomyNode[];
+  organisms?: string[];
+}
+
+export type AnatomySystem =
+  | "external"
+  | "muscular"
+  | "skeletal"
+  | "digestive"
+  | "respiratory"
+  | "circulatory"
+  | "nervous"
+  | "reproductive";
+
+export interface AnatomyStructure {
+  id: string;
+  name: string;
+  system: AnatomySystem;
+  description: string;
+  function: string;
+  verified: boolean;
 }
