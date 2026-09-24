@@ -21,7 +21,7 @@ export const cockroachAnatomy: AnimalAnatomy = {
       system: "external",
       name: "External Morphology",
       shortDescription:
-        "Interactive external anatomy asset will be added after scientific asset verification.",
+        "Verified external morphology visualization is pending.",
       assetType: "none",
       verified: false,
     },
@@ -57,5 +57,74 @@ export const cockroachAnatomy: AnimalAnatomy = {
     },
   ],
 
-  dissectionAvailable: false,
+  dissectionLayers: [
+    {
+      id: "cockroach-external-layer",
+      animalSlug: "cockroach",
+      order: 1,
+      name: "External Body",
+      description:
+        "Verified educational description for the external body is pending.",
+      function: "Scientific functional information is pending verification.",
+      relatedSystem: "external",
+      status: "pending",
+      assetType: "none",
+      verified: false,
+    },
+
+    {
+      id: "cockroach-covering-layer",
+      animalSlug: "cockroach",
+      order: 2,
+      name: "Body Covering / Exoskeleton",
+      description:
+        "Verified educational description for the body covering is pending.",
+      function: "Scientific functional information is pending verification.",
+      relatedSystem: "external",
+      status: "pending",
+      assetType: "none",
+      verified: false,
+    },
+
+    {
+      id: "cockroach-muscular-layer",
+      animalSlug: "cockroach",
+      order: 3,
+      name: "Muscular Layer",
+      description:
+        "Verified educational description for the muscular layer is pending.",
+      function: "Scientific functional information is pending verification.",
+      relatedSystem: "muscular",
+      status: "pending",
+      assetType: "none",
+      verified: false,
+    },
+
+    {
+      id: "cockroach-internal-layer",
+      animalSlug: "cockroach",
+      order: 4,
+      name: "Internal Organs",
+      description:
+        "Verified educational description for internal organs is pending.",
+      function: "Scientific functional information is pending verification.",
+      status: "pending",
+      assetType: "none",
+      verified: false,
+    },
+
+    {
+      id: "cockroach-systems-layer",
+      animalSlug: "cockroach",
+      order: 5,
+      name: "Organ Systems",
+      description: "Verified organ-system visualization is pending.",
+      function: "Scientific functional information is pending verification.",
+      status: "pending",
+      assetType: "none",
+      verified: false,
+    },
+  ],
+
+  dissectionAvailable: true,
 };
