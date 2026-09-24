@@ -32,6 +32,7 @@ export interface Animal {
 
 export interface TaxonomyNode {
   name: string;
+
   rank:
     | "Kingdom"
     | "Phylum"
@@ -58,14 +59,31 @@ export interface AnatomyStructure {
   name: string;
   shortDescription?: string;
 
-  /**
-   * Future:
-   * - 3D model
-   * - 2D image
-   * - SVG
-   * - hotspot coordinates
-   */
   assetType?: "none" | "2d" | "3d";
+  assetUrl?: string;
+
+  verified: boolean;
+}
+
+export interface DissectionLayer {
+  id: string;
+
+  animalSlug: string;
+
+  order: number;
+
+  name: string;
+
+  description: string;
+
+  function: string;
+
+  relatedSystem?: AnatomySystem;
+
+  status: "available" | "pending";
+
+  assetType?: "none" | "2d" | "3d";
+
   assetUrl?: string;
 
   verified: boolean;
@@ -78,8 +96,7 @@ export interface AnimalAnatomy {
 
   structures: AnatomyStructure[];
 
-  /**
-   * Future virtual dissection flow.
-   */
+  dissectionLayers: DissectionLayer[];
+
   dissectionAvailable: boolean;
 }
