@@ -100,3 +100,34 @@ export interface AnimalAnatomy {
 
   dissectionAvailable: boolean;
 }
+
+export type ComparisonCategory =
+  | "classification"
+  | "habitat"
+  | "bodyCovering"
+  | "skeleton"
+  | "heart"
+  | "circulation"
+  | "respiration"
+  | "digestion"
+  | "excretion"
+  | "reproduction"
+  | "fertilization"
+  | "development";
+
+export interface ComparativeData {
+  animalSlug: string;
+
+  classification: string;
+  habitat: string;
+  bodyCovering: string;
+  skeleton: string;
+  heart: string;
+  circulation: string;
+  respiration: string;
+  digestion: string;
+  excretion: string;
+  reproduction: string;
+  fertilization: string;
+  development: string;
+}
