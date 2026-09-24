@@ -7,6 +7,7 @@ import { ArrowLeft, Dna, Search } from "lucide-react";
 
 import { animals } from "@/data/animals";
 import AnatomyViewer from "@/components/anatomy/AnatomyViewer";
+import VirtualDissection from "@/components/anatomy/VirtualDissection";
 
 export default function AnatomyPage() {
   const router = useRouter();
@@ -125,8 +126,16 @@ export default function AnatomyPage() {
       </section>
 
       {/* Viewer */}
-      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <AnatomyViewer key={selectedAnimal.slug} animal={selectedAnimal} />
+      <section className="mx-auto max-w-7xl space-y-8 px-6 py-8 lg:px-8">
+        <AnatomyViewer
+          key={`viewer-${selectedAnimal.slug}`}
+          animal={selectedAnimal}
+        />
+
+        <VirtualDissection
+          key={`dissection-${selectedAnimal.slug}`}
+          animal={selectedAnimal}
+        />
       </section>
 
       {/* Footer information */}
