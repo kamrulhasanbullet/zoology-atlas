@@ -131,3 +131,41 @@ export interface ComparativeData {
   fertilization: string;
   development: string;
 }
+
+export interface StudySection {
+  id: string;
+  title: string;
+  content: string;
+  status: "available" | "pending";
+}
+
+export interface StudyTopic {
+  animalSlug: string;
+
+  overview: StudySection;
+
+  detailedSections: StudySection[];
+
+  importantTerms: string[];
+
+  keyCharacteristics: string[];
+
+  importantFacts: string[];
+
+  diagrams: {
+    id: string;
+    title: string;
+    description: string;
+    assetType: "none" | "image" | "svg" | "3d";
+    assetUrl?: string;
+    verified: boolean;
+  }[];
+
+  tables: {
+    id: string;
+    title: string;
+    columns: string[];
+    rows: string[][];
+    verified: boolean;
+  }[];
+}
