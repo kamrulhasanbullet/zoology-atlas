@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { animals } from "@/data/animals";
+import StudyMode from "@/components/study/StudyMode";
 
 interface PageProps {
   params: Promise<{
@@ -295,6 +296,10 @@ function QuickFact({
     </div>
   );
 }
+
+<section className="mt-16">
+  <StudyMode animal={animal} />
+</section>;
 
 function Feature({
   icon: Icon,
