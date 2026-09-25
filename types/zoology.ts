@@ -169,3 +169,27 @@ export interface StudyTopic {
     verified: boolean;
   }[];
 }
+
+export type QuizQuestionType = "mcq" | "true-false" | "classification";
+
+export interface QuizOption {
+  id: string;
+  text: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  animalSlug: string;
+
+  type: QuizQuestionType;
+
+  question: string;
+
+  options: QuizOption[];
+
+  correctAnswer: string;
+
+  explanation: string;
+
+  verified: boolean;
+}
