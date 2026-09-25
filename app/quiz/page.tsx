@@ -6,6 +6,7 @@ import { ArrowLeft, Brain, Search } from "lucide-react";
 
 import { animals } from "@/data/animals";
 import QuizEngine from "@/components/quiz/QuizEngine";
+import VivaMode from "@/components/viva/VivaMode";
 
 export default function QuizPage() {
   const availableAnimals = useMemo(
@@ -102,6 +103,12 @@ export default function QuizPage() {
           </div>
         )}
       </section>
+
+      {selectedAnimal && (
+        <section className="mx-auto mt-8 max-w-4xl px-6 pb-16 lg:px-8">
+          <VivaMode animal={selectedAnimal} />
+        </section>
+      )}
     </main>
   );
 }
