@@ -193,3 +193,12 @@ export interface QuizQuestion {
 
   verified: boolean;
 }
+
+export interface VivaQuestion {
+  id: string;
+  animalSlug: string;
+  question: string;
+  answer: string;
+  hint?: string;
+  verified: boolean;
+}
