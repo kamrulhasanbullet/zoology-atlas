@@ -29,6 +29,14 @@ const links = [
     name: "Quiz",
     href: "/quiz",
   },
+  {
+    name: "Progress",
+    href: "/progress",
+  },
+  {
+    name: "Bookmarks",
+    href: "/bookmarks",
+  },
 ];
 
 export default function Navbar() {
@@ -59,7 +67,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 lg:flex">
+        <nav className="hidden items-center gap-5 xl:flex">
           {links.map((link) => (
             <Link
               key={link.href}
