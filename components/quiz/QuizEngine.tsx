@@ -6,6 +6,8 @@ import { CheckCircle2, CircleAlert, RotateCcw, XCircle } from "lucide-react";
 import type { Animal } from "@/types/zoology";
 import { getQuizQuestions } from "@/data/quiz";
 
+import { saveQuizAttempt, markAnimalStudied } from "@/lib/storage/progress";
+
 interface QuizEngineProps {
   animal: Animal;
 }
@@ -68,8 +70,34 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
   const handleNext = () => {
     if (!submitted) return;
 
+    /*
+     * IMPORTANT:
+     * React state update is asynchronous.
+     * So on the last question, `score` may not
+     * yet contain the current question's score.
+     */
+    const currentQuestionCorrect =
+      selectedAnswer === currentQuestion.correctAnswer;
+
+    const finalScore = score + (currentQuestionCorrect ? 1 : 0);
+
     if (currentIndex === questions.length - 1) {
+      const percentage = Math.round((finalScore / questions.length) * 100);
+
+      // Save quiz result
+      saveQuizAttempt({
+        animalSlug: animal.slug,
+        score: finalScore,
+        totalQuestions: questions.length,
+        percentage,
+      });
+
+      // Consider the animal studied
+      markAnimalStudied(animal.slug);
+
+      setScore(finalScore);
       setFinished(true);
+
       return;
     }
 
@@ -87,6 +115,12 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
     setFinished(false);
   };
 
+  /*
+   * Final percentage
+   */
+  const finalPercentage =
+    questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
+
   if (finished) {
     return (
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 text-center sm:p-12">
@@ -102,6 +136,7 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
           {animal.commonName}
         </h2>
 
+        {/* Score */}
         <div className="mt-8">
           <p className="text-5xl font-black text-white">
             {score}
@@ -109,6 +144,13 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
           </p>
 
           <p className="mt-2 text-sm text-zinc-500">Correct answers</p>
+
+          {/* Percentage */}
+          <div className="mt-6 inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2">
+            <span className="text-sm font-semibold text-cyan-300">
+              Score: {finalPercentage}%
+            </span>
+          </div>
         </div>
 
         <button
