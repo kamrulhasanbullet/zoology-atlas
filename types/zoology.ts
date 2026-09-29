@@ -202,3 +202,32 @@ export interface VivaQuestion {
   hint?: string;
   verified: boolean;
 }
+
+export interface ProgressRecord {
+  animalSlug: string;
+  studied: boolean;
+  anatomyExplored: boolean;
+  studyCompleted: boolean;
+  lastStudiedAt?: string;
+}
+
+export interface QuizAttempt {
+  id: string;
+  animalSlug: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  attemptedAt: string;
+}
+
+export type BookmarkType = "question" | "study" | "anatomy";
+
+export interface BookmarkItem {
+  id: string;
+  type: BookmarkType;
+  animalSlug: string;
+  title: string;
+  description?: string;
+  referenceId?: string;
+  createdAt: string;
+}
