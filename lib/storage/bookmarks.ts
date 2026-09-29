@@ -1,4 +1,4 @@
-import type { BookmarkItem } from "@/types/zoology";
+import type { BookmarkItem, BookmarkType } from "@/types/zoology";
 
 const BOOKMARKS_KEY = "zoology-atlas-bookmarks-v1";
 
@@ -6,7 +6,7 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-export function getBookmarks(): BookmarkItem[] {
+function readBookmarks(): BookmarkItem[] {
   if (!isBrowser()) return [];
 
   try {
@@ -14,46 +14,81 @@ export function getBookmarks(): BookmarkItem[] {
 
     if (!stored) return [];
 
-    return JSON.parse(stored) as BookmarkItem[];
+    const parsed = JSON.parse(stored);
+
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-function saveBookmarks(bookmarks: BookmarkItem[]) {
+function writeBookmarks(bookmarks: BookmarkItem[]) {
   if (!isBrowser()) return;
 
   localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
 }
 
-export function isBookmarked(id: string) {
-  return getBookmarks().some((bookmark) => bookmark.id === id);
+function generateId() {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function addBookmark(bookmark: Omit<BookmarkItem, "createdAt">) {
-  const bookmarks = getBookmarks();
+export function getBookmarks(): BookmarkItem[] {
+  return readBookmarks();
+}
 
-  const exists = bookmarks.some((item) => item.id === bookmark.id);
+export function isBookmarked(type: BookmarkType, referenceId: string): boolean {
+  const bookmarks = readBookmarks();
 
-  if (exists) return;
+  return bookmarks.some(
+    (bookmark) =>
+      bookmark.type === type && bookmark.referenceId === referenceId,
+  );
+}
+
+export function addBookmark(bookmark: Omit<BookmarkItem, "id" | "createdAt">) {
+  const bookmarks = readBookmarks();
+
+  const alreadyExists = bookmarks.some(
+    (item) =>
+      item.type === bookmark.type && item.referenceId === bookmark.referenceId,
+  );
+
+  if (alreadyExists) return;
 
   const newBookmark: BookmarkItem = {
     ...bookmark,
+    id: generateId(),
     createdAt: new Date().toISOString(),
   };
 
-  saveBookmarks([newBookmark, ...bookmarks]);
+  writeBookmarks([newBookmark, ...bookmarks]);
 }
 
-export function removeBookmark(id: string) {
-  const bookmarks = getBookmarks();
+export function removeBookmark(type: BookmarkType, referenceId: string) {
+  const bookmarks = readBookmarks();
 
-  saveBookmarks(bookmarks.filter((bookmark) => bookmark.id !== id));
+  const filtered = bookmarks.filter(
+    (bookmark) =>
+      !(bookmark.type === type && bookmark.referenceId === referenceId),
+  );
+
+  writeBookmarks(filtered);
 }
 
-export function toggleBookmark(bookmark: Omit<BookmarkItem, "createdAt">) {
-  if (isBookmarked(bookmark.id)) {
-    removeBookmark(bookmark.id);
+export function toggleBookmark(
+  bookmark: Omit<BookmarkItem, "id" | "createdAt">,
+): boolean {
+  const bookmarked = isBookmarked(bookmark.type, bookmark.referenceId);
+
+  if (bookmarked) {
+    removeBookmark(bookmark.type, bookmark.referenceId);
 
     return false;
   }
@@ -63,8 +98,6 @@ export function toggleBookmark(bookmark: Omit<BookmarkItem, "createdAt">) {
   return true;
 }
 
-export function getBookmarksByAnimal(animalSlug: string) {
-  return getBookmarks().filter(
-    (bookmark) => bookmark.animalSlug === animalSlug,
-  );
+export function getBookmarksByType(type: BookmarkType): BookmarkItem[] {
+  return readBookmarks().filter((bookmark) => bookmark.type === type);
 }

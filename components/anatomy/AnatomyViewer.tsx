@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   RotateCcw,
   ZoomIn,
@@ -9,11 +9,15 @@ import {
   Layers3,
   CircleAlert,
   Box,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 
 import type { Animal, AnatomyStructure, AnatomySystem } from "@/types/zoology";
 
 import { getAnimalAnatomy } from "@/data/anatomy";
+
+import { isBookmarked, toggleBookmark } from "@/lib/storage/bookmarks";
 
 interface AnatomyViewerProps {
   animal: Animal;
@@ -48,6 +52,8 @@ export default function AnatomyViewer({ animal }: AnatomyViewerProps) {
 
   const [zoom, setZoom] = useState(100);
 
+  const [bookmarked, setBookmarked] = useState(false);
+
   const structures = useMemo(() => {
     if (!anatomy) return [];
 
@@ -55,6 +61,19 @@ export default function AnatomyViewer({ animal }: AnatomyViewerProps) {
       (structure) => structure.system === activeSystem,
     );
   }, [anatomy, activeSystem]);
+
+  /*
+   * Update bookmark state whenever selected
+   * anatomy structure changes.
+   */
+  useEffect(() => {
+    if (!selectedStructure) {
+      setBookmarked(false);
+      return;
+    }
+
+    setBookmarked(isBookmarked("anatomy-structure", selectedStructure.id));
+  }, [selectedStructure]);
 
   const handleSystemChange = (system: AnatomySystem) => {
     setActiveSystem(system);
@@ -82,6 +101,22 @@ export default function AnatomyViewer({ animal }: AnatomyViewerProps) {
     );
 
     setSelectedStructure(firstStructure);
+  };
+
+  const handleBookmark = () => {
+    if (!selectedStructure) return;
+
+    const nextState = toggleBookmark({
+      type: "anatomy-structure",
+      animalSlug: animal.slug,
+      title: `${animal.commonName} — ${selectedStructure.name}`,
+      description:
+        selectedStructure.shortDescription ??
+        "Saved anatomy structure for later study.",
+      referenceId: selectedStructure.id,
+    });
+
+    setBookmarked(nextState);
   };
 
   if (!anatomy) {
@@ -290,12 +325,37 @@ export default function AnatomyViewer({ animal }: AnatomyViewerProps) {
         {/* Information */}
         {showInfo && (
           <aside className="border-t border-white/10 p-5 lg:border-l lg:border-t-0">
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-cyan-400" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-cyan-400" />
 
-              <h3 className="text-sm font-semibold text-white">
-                Structure Information
-              </h3>
+                <h3 className="text-sm font-semibold text-white">
+                  Structure Information
+                </h3>
+              </div>
+
+              {/* Bookmark button */}
+              {selectedStructure && (
+                <button
+                  type="button"
+                  onClick={handleBookmark}
+                  className={`rounded-lg border p-2 transition ${
+                    bookmarked
+                      ? "border-amber-400/30 bg-amber-400/10 text-amber-300"
+                      : "border-white/10 bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white"
+                  }`}
+                  aria-label={
+                    bookmarked ? "Remove bookmark" : "Bookmark structure"
+                  }
+                  title={bookmarked ? "Remove bookmark" : "Bookmark structure"}
+                >
+                  {bookmarked ? (
+                    <BookmarkCheck className="h-4 w-4" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                </button>
+              )}
             </div>
 
             {selectedStructure ? (
@@ -331,6 +391,39 @@ export default function AnatomyViewer({ animal }: AnatomyViewerProps) {
                         ? "3D visualization asset connected"
                         : "No visualization asset connected"}
                   </p>
+                </div>
+
+                {/* Bookmark status */}
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="flex items-center gap-2">
+                    {bookmarked ? (
+                      <BookmarkCheck className="h-4 w-4 text-amber-300" />
+                    ) : (
+                      <Bookmark className="h-4 w-4 text-zinc-500" />
+                    )}
+
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-600">
+                      Bookmark
+                    </p>
+                  </div>
+
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {bookmarked
+                      ? "Saved to your bookmarks."
+                      : "Save this structure for later study."}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleBookmark}
+                    className={`mt-3 w-full rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+                      bookmarked
+                        ? "border border-amber-400/20 bg-amber-400/10 text-amber-300 hover:bg-amber-400/15"
+                        : "bg-cyan-400 text-black hover:bg-cyan-300"
+                    }`}
+                  >
+                    {bookmarked ? "Remove Bookmark" : "Bookmark Structure"}
+                  </button>
                 </div>
               </div>
             ) : (

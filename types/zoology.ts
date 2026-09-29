@@ -220,7 +220,10 @@ export interface QuizAttempt {
   attemptedAt: string;
 }
 
-export type BookmarkType = "question" | "study" | "anatomy";
+export type BookmarkType =
+  | "quiz-question"
+  | "study-section"
+  | "anatomy-structure";
 
 export interface BookmarkItem {
   id: string;
@@ -228,6 +231,6 @@ export interface BookmarkItem {
   animalSlug: string;
   title: string;
   description?: string;
-  referenceId?: string;
+  referenceId: string;
   createdAt: string;
 }
