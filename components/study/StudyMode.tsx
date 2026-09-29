@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   BookOpen,
+  CheckCircle2,
   ChevronDown,
   CircleAlert,
   FileText,
@@ -13,6 +14,8 @@ import {
 import type { Animal } from "@/types/zoology";
 import { getStudyTopic } from "@/data/study";
 
+import { markAnimalStudied, markStudyCompleted } from "@/lib/storage/progress";
+
 interface StudyModeProps {
   animal: Animal;
 }
@@ -21,6 +24,10 @@ export default function StudyMode({ animal }: StudyModeProps) {
   const study = getStudyTopic(animal.slug);
 
   const [openSection, setOpenSection] = useState<string | null>(null);
+
+  const [studyStarted, setStudyStarted] = useState(false);
+
+  const [studyCompleted, setStudyCompleted] = useState(false);
 
   if (!study) {
     return (
@@ -43,24 +50,71 @@ export default function StudyMode({ animal }: StudyModeProps) {
     setOpenSection((current) => (current === id ? null : id));
   };
 
+  /*
+   * Start Study
+   */
+  const handleStartStudy = () => {
+    markAnimalStudied(animal.slug);
+
+    setStudyStarted(true);
+  };
+
+  /*
+   * Complete Study
+   */
+  const handleCompleteStudy = () => {
+    markStudyCompleted(animal.slug);
+
+    setStudyStarted(true);
+    setStudyCompleted(true);
+  };
+
   return (
     <section className="space-y-6">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10">
-            <BookOpen className="h-5 w-5 text-cyan-400" />
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10">
+              <BookOpen className="h-5 w-5 text-cyan-400" />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-400">
+                Study Mode
+              </p>
+
+              <h2 className="mt-1 text-2xl font-bold text-white">
+                Study {animal.commonName}
+              </h2>
+            </div>
           </div>
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-400">
-              Study Mode
-            </p>
-
-            <h2 className="mt-1 text-2xl font-bold text-white">
-              Study {animal.commonName}
-            </h2>
-          </div>
+          {/* Study Action */}
+          {!studyCompleted ? (
+            <button
+              type="button"
+              onClick={studyStarted ? handleCompleteStudy : handleStartStudy}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-cyan-300"
+            >
+              {studyStarted ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Mark Study Complete
+                </>
+              ) : (
+                <>
+                  <BookOpen className="h-4 w-4" />
+                  Start Studying
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-sm font-semibold text-emerald-300">
+              <CheckCircle2 className="h-4 w-4" />
+              Study Completed
+            </div>
+          )}
         </div>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">
@@ -68,6 +122,27 @@ export default function StudyMode({ animal }: StudyModeProps) {
           study resources.
         </p>
       </div>
+
+      {/* Study Progress Status */}
+      {studyStarted && (
+        <div className="rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.03] p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-cyan-400" />
+
+            <div>
+              <p className="text-sm font-medium text-cyan-300">
+                {studyCompleted
+                  ? "Learning progress saved."
+                  : "Study session started."}
+              </p>
+
+              <p className="mt-1 text-xs text-zinc-500">
+                Your progress for {animal.commonName} is being tracked.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overview */}
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
@@ -191,6 +266,7 @@ export default function StudyMode({ animal }: StudyModeProps) {
                   className="flex gap-3 text-sm leading-6 text-zinc-400"
                 >
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400" />
+
                   {item}
                 </li>
               ))}
