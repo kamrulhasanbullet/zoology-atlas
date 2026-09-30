@@ -234,3 +234,15 @@ export interface BookmarkItem {
   referenceId: string;
   createdAt: string;
 }
+
+export interface EvolutionNode {
+  id: string;
+  animalSlug?: string;
+  name: string;
+  scientificName?: string;
+  group: string;
+  description?: string;
+  parentId?: string;
+  children?: string[];
+  verified: boolean;
+}
