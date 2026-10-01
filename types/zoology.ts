@@ -206,8 +206,8 @@ export interface VivaQuestion {
 export interface ProgressRecord {
   animalSlug: string;
   studied: boolean;
-  anatomyExplored: boolean;
   studyCompleted: boolean;
+  firstStudiedAt?: string;
   lastStudiedAt?: string;
 }
 
