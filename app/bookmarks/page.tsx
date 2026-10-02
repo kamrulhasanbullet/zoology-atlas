@@ -1,26 +1,39 @@
 import BookmarkPanel from "@/components/bookmarks/BookmarkPanel";
+import { BookmarkCheck } from "lucide-react";
 
 export default function BookmarksPage() {
   return (
-    <main className="min-h-screen bg-[#05080d] px-6 py-16 lg:px-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-10">
-          <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-cyan-400">
-            Learning Library
-          </p>
+    <main className="min-h-screen bg-black text-white">
+      {/* Hero */}
+      <section className="border-b border-white/10 bg-gradient-to-b from-cyan-950/20 via-black to-black">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10">
+              <BookmarkCheck className="h-6 w-6 text-cyan-300" />
+            </div>
 
-          <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
-            Your Bookmarks
-          </h1>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+                Your Learning Library
+              </p>
 
-          <p className="mt-4 max-w-2xl text-white/55">
-            Keep important study materials, questions, and anatomy references in
-            one place.
-          </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                Bookmarks
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+                Keep important anatomy structures, study sections, and quiz
+                questions in one place for quick revision.
+              </p>
+            </div>
+          </div>
         </div>
+      </section>
 
+      {/* Content */}
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <BookmarkPanel />
-      </div>
+      </section>
     </main>
   );
 }
