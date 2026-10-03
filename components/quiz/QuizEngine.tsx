@@ -1,12 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, RotateCcw, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Bookmark,
+  BookmarkCheck,
+  CheckCircle2,
+  CircleAlert,
+  RotateCcw,
+  XCircle,
+} from "lucide-react";
 
 import type { Animal } from "@/types/zoology";
 import { getQuizQuestions } from "@/data/quiz";
 
 import { saveQuizAttempt, markAnimalStudied } from "@/lib/storage/progress";
+
+import {
+  addBookmark,
+  isBookmarked,
+  removeBookmark,
+} from "@/lib/storage/bookmarks";
 
 interface QuizEngineProps {
   animal: Animal;
@@ -27,6 +40,23 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
   const [score, setScore] = useState(0);
 
   const [finished, setFinished] = useState(false);
+
+  const [bookmarked, setBookmarked] = useState(false);
+
+  /*
+   * Sync bookmark state whenever
+   * the current question changes.
+   */
+  useEffect(() => {
+    const currentQuestion = questions[currentIndex];
+
+    if (!currentQuestion) {
+      setBookmarked(false);
+      return;
+    }
+
+    setBookmarked(isBookmarked("quiz-question", currentQuestion.id));
+  }, [currentIndex, questions]);
 
   if (questions.length === 0) {
     return (
@@ -116,6 +146,35 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
   };
 
   /*
+   * Bookmark / remove bookmark
+   */
+  const handleBookmark = () => {
+    const currentQuestion = questions[currentIndex];
+
+    if (!currentQuestion) return;
+
+    const alreadyBookmarked = isBookmarked("quiz-question", currentQuestion.id);
+
+    if (alreadyBookmarked) {
+      removeBookmark("quiz-question", currentQuestion.id);
+
+      setBookmarked(false);
+
+      return;
+    }
+
+    addBookmark({
+      type: "quiz-question",
+      animalSlug: currentQuestion.animalSlug,
+      title: currentQuestion.question,
+      description: currentQuestion.explanation,
+      referenceId: currentQuestion.id,
+    });
+
+    setBookmarked(true);
+  };
+
+  /*
    * Final percentage
    */
   const finalPercentage =
@@ -179,9 +238,31 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
           </p>
         </div>
 
-        <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-zinc-500">
-          Score: {score}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Bookmark */}
+          <button
+            type="button"
+            onClick={handleBookmark}
+            aria-label={bookmarked ? "Remove bookmark" : "Bookmark question"}
+            title={bookmarked ? "Remove bookmark" : "Bookmark question"}
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+              bookmarked
+                ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-300"
+                : "border-white/10 bg-white/[0.03] text-zinc-500 hover:border-white/20 hover:text-zinc-300"
+            }`}
+          >
+            {bookmarked ? (
+              <BookmarkCheck className="h-4 w-4" />
+            ) : (
+              <Bookmark className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Score */}
+          <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-zinc-500">
+            Score: {score}
+          </span>
+        </div>
       </div>
 
       {/* Progress */}
@@ -288,6 +369,17 @@ export default function QuizEngine({ animal }: QuizEngineProps) {
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Bookmark Status */}
+      {bookmarked && (
+        <div className="mt-5 flex items-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] px-4 py-3">
+          <BookmarkCheck className="h-4 w-4 text-cyan-400" />
+
+          <p className="text-xs text-cyan-300">
+            This question is saved to your bookmarks.
+          </p>
         </div>
       )}
 
