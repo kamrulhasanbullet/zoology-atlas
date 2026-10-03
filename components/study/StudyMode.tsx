@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BookOpen,
+  Bookmark,
+  BookmarkCheck,
   CheckCircle2,
   ChevronDown,
   CircleAlert,
@@ -16,6 +18,12 @@ import { getStudyTopic } from "@/data/study";
 
 import { markAnimalStudied, markStudyCompleted } from "@/lib/storage/progress";
 
+import {
+  addBookmark,
+  isBookmarked,
+  removeBookmark,
+} from "@/lib/storage/bookmarks";
+
 interface StudyModeProps {
   animal: Animal;
 }
@@ -28,6 +36,32 @@ export default function StudyMode({ animal }: StudyModeProps) {
   const [studyStarted, setStudyStarted] = useState(false);
 
   const [studyCompleted, setStudyCompleted] = useState(false);
+
+  const [bookmarkedSections, setBookmarkedSections] = useState<
+    Record<string, boolean>
+  >({});
+
+  /*
+   * Sync bookmark state
+   */
+  useEffect(() => {
+    if (!study) return;
+
+    const initialBookmarks: Record<string, boolean> = {};
+
+    // Overview bookmark
+    initialBookmarks[study.overview.id] = isBookmarked(
+      "study-section",
+      study.overview.id,
+    );
+
+    // Detailed sections bookmarks
+    study.detailedSections.forEach((section) => {
+      initialBookmarks[section.id] = isBookmarked("study-section", section.id);
+    });
+
+    setBookmarkedSections(initialBookmarks);
+  }, [study]);
 
   if (!study) {
     return (
@@ -69,9 +103,46 @@ export default function StudyMode({ animal }: StudyModeProps) {
     setStudyCompleted(true);
   };
 
+  /*
+   * Bookmark / Unbookmark Study Section
+   */
+  const handleBookmarkSection = (
+    sectionId: string,
+    title: string,
+    content: string,
+  ) => {
+    const alreadyBookmarked = isBookmarked("study-section", sectionId);
+
+    if (alreadyBookmarked) {
+      removeBookmark("study-section", sectionId);
+
+      setBookmarkedSections((current) => ({
+        ...current,
+        [sectionId]: false,
+      }));
+
+      return;
+    }
+
+    addBookmark({
+      type: "study-section",
+      animalSlug: animal.slug,
+      title: `${animal.commonName} — ${title}`,
+      description: content,
+      referenceId: sectionId,
+    });
+
+    setBookmarkedSections((current) => ({
+      ...current,
+      [sectionId]: true,
+    }));
+  };
+
   return (
     <section className="space-y-6">
-      {/* Header */}
+      {/* =========================================================
+          Header
+      ========================================================= */}
       <div>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -123,7 +194,9 @@ export default function StudyMode({ animal }: StudyModeProps) {
         </p>
       </div>
 
-      {/* Study Progress Status */}
+      {/* =========================================================
+          Study Progress Status
+      ========================================================= */}
       {studyStarted && (
         <div className="rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.03] p-4">
           <div className="flex items-center gap-3">
@@ -144,14 +217,42 @@ export default function StudyMode({ animal }: StudyModeProps) {
         </div>
       )}
 
-      {/* Overview */}
+      {/* =========================================================
+          Overview
+      ========================================================= */}
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
-        <div className="flex items-center gap-3">
-          <FileText className="h-5 w-5 text-cyan-400" />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 text-cyan-400" />
 
-          <h3 className="text-lg font-semibold text-white">
-            {study.overview.title}
-          </h3>
+            <h3 className="text-lg font-semibold text-white">
+              {study.overview.title}
+            </h3>
+          </div>
+
+          {/* Overview Bookmark */}
+          <button
+            type="button"
+            onClick={() =>
+              handleBookmarkSection(
+                study.overview.id,
+                study.overview.title,
+                study.overview.content,
+              )
+            }
+            aria-label={
+              bookmarkedSections[study.overview.id]
+                ? "Remove overview bookmark"
+                : "Bookmark overview"
+            }
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:bg-white/[0.08] hover:text-white"
+          >
+            {bookmarkedSections[study.overview.id] ? (
+              <BookmarkCheck className="h-4 w-4 text-cyan-300" />
+            ) : (
+              <Bookmark className="h-4 w-4" />
+            )}
+          </button>
         </div>
 
         <div className="mt-5 rounded-2xl border border-amber-400/10 bg-amber-400/[0.03] p-5">
@@ -165,7 +266,9 @@ export default function StudyMode({ animal }: StudyModeProps) {
         </div>
       </div>
 
-      {/* Detailed Sections */}
+      {/* =========================================================
+          Detailed Sections
+      ========================================================= */}
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
         <div className="flex items-center gap-3">
           <Layers3 className="h-5 w-5 text-cyan-400" />
@@ -177,35 +280,66 @@ export default function StudyMode({ animal }: StudyModeProps) {
           {study.detailedSections.map((section) => {
             const isOpen = openSection === section.id;
 
+            const isBookmarked = bookmarkedSections[section.id];
+
             return (
               <div
                 key={section.id}
                 className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleSection(section.id)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/[0.04]"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {section.title}
-                    </p>
+                {/* Section Header */}
+                <div className="flex items-center gap-2 px-5 py-4">
+                  {/* Open / Close */}
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.id)}
+                    className="flex min-w-0 flex-1 items-center justify-between gap-4 text-left transition"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {section.title}
+                      </p>
 
-                    <p className="mt-1 text-xs text-zinc-600">
-                      {section.status === "available"
-                        ? "Available"
-                        : "Pending verification"}
-                    </p>
-                  </div>
+                      <p className="mt-1 text-xs text-zinc-600">
+                        {section.status === "available"
+                          ? "Available"
+                          : "Pending verification"}
+                      </p>
+                    </div>
 
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
+                  {/* Bookmark */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleBookmarkSection(
+                        section.id,
+                        section.title,
+                        section.content,
+                      )
+                    }
+                    aria-label={
+                      isBookmarked
+                        ? "Remove section bookmark"
+                        : "Bookmark section"
+                    }
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-zinc-400 transition hover:bg-white/[0.08] hover:text-white"
+                  >
+                    {isBookmarked ? (
+                      <BookmarkCheck className="h-4 w-4 text-cyan-300" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Section Content */}
                 {isOpen && (
                   <div className="border-t border-white/10 px-5 py-5">
                     <p className="text-sm leading-7 text-zinc-400">
@@ -219,8 +353,11 @@ export default function StudyMode({ animal }: StudyModeProps) {
         </div>
       </div>
 
-      {/* Important Terms */}
+      {/* =========================================================
+          Important Terms + Characteristics
+      ========================================================= */}
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Important Terms */}
         <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
           <div className="flex items-center gap-3">
             <Lightbulb className="h-5 w-5 text-cyan-400" />
@@ -275,7 +412,9 @@ export default function StudyMode({ animal }: StudyModeProps) {
         </div>
       </div>
 
-      {/* Important Facts */}
+      {/* =========================================================
+          Important Facts
+      ========================================================= */}
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
         <div className="flex items-center gap-3">
           <Lightbulb className="h-5 w-5 text-cyan-400" />
@@ -299,7 +438,9 @@ export default function StudyMode({ animal }: StudyModeProps) {
         )}
       </div>
 
-      {/* Diagrams */}
+      {/* =========================================================
+          Diagrams
+      ========================================================= */}
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6">
         <div className="flex items-center gap-3">
           <Layers3 className="h-5 w-5 text-cyan-400" />
