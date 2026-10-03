@@ -45,9 +45,7 @@ export default function SearchBox() {
     };
   }, []);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  function navigateToSearch() {
     const trimmedQuery = query.trim();
 
     if (!trimmedQuery) return;
@@ -57,9 +55,16 @@ export default function SearchBox() {
     router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
   }
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    navigateToSearch();
+  }
+
   function handleResultClick(result: SearchResult) {
     setOpen(false);
     setQuery("");
+
     router.push(result.href);
   }
 
@@ -76,8 +81,8 @@ export default function SearchBox() {
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            placeholder="Search animals, anatomy..."
-            className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-10 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-cyan-400/30 focus:bg-white/[0.06]"
+            placeholder="Search animals, scientific name..."
+            className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-10 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-cyan-400/30 focus:bg-white/[0.06]"
           />
 
           {query && (
@@ -87,6 +92,7 @@ export default function SearchBox() {
                 setQuery("");
                 setResults([]);
               }}
+              aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-white"
             >
               <X className="h-4 w-4" />
@@ -127,8 +133,8 @@ export default function SearchBox() {
               ))}
 
               <button
-                type="submit"
-                onClick={handleSubmit}
+                type="button"
+                onClick={navigateToSearch}
                 className="mt-1 w-full rounded-xl border-t border-white/10 px-3 py-3 text-left text-xs text-zinc-500 transition hover:text-cyan-300"
               >
                 View all results for{" "}
